@@ -5,13 +5,8 @@ import FourPointTransform
 
 class ScoutingFormData:
     def __init__(self):
-        self.team1 = []
-        self.team10 = []
-        self.team100 = []
-        self.team1000 = []
-        self.match1 = []
-        self.match10 = []
-        self.match100 = []
+        self.team = []
+        self.match = []
         self.color = []
         self.habCross = []
         self.hatchLow = []
@@ -24,16 +19,30 @@ class ScoutingFormData:
         self.playedDefense = []
         self.defenseAgainst = []
 
+
+def FormatBlankData(data):
+    if data:
+        data += 1
+    else:
+        data = 0
+
+    return data
+
+
 def ResizeImg(img, heightDesired):
+    isError = False
+
     height, width, channels = img.shape
 
     ratio = width / height
     widthDesired = heightDesired * ratio
 
     img = cv2.resize(img, (int(widthDesired), int(heightDesired)))
-    return img
+    return img, isError
 
 def FitToQuestionBox(img):
+    isError = False
+
     height = 600
     img = ResizeImg(img, height)
 
@@ -54,7 +63,10 @@ def FitToQuestionBox(img):
         if len(tempVertices) == 4:
             vertices = tempVertices
             break
-    # need error handling here
+
+    if vertices == 0:
+        isError = True
+        print("Error question box not found")
 
     imgBoxHighlight = img.copy()
     cv2.drawContours(imgBoxHighlight, [vertices], -1, (0, 255, 0), 3)
@@ -93,11 +105,13 @@ def FitToQuestionBox(img):
         imgBoxHighlight = cv2.rotate(imgBoxHighlight, cv2.ROTATE_180)
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_180)
 
-    cv2.imshow("imgBoxHighlight", imgBoxHighlight)
-    return imgBox
+    # cv2.imshow("imgBoxHighlight", imgBoxHighlight)
+    return imgBox, isError
 
 
 def FindBubbles(imgBox):
+    isError = False
+
     # fill in bubbles
     imgBoxGray = cv2.cvtColor(imgBox, cv2.COLOR_BGR2GRAY)
     imgBoxBlur = cv2.GaussianBlur(imgBoxGray, (5, 5), 0)
@@ -112,7 +126,7 @@ def FindBubbles(imgBox):
         (x, y), rad = cv2.minEnclosingCircle(c)
 
         if rad < radThreshMax and rad > radThreshMin:
-            cv2.fillPoly(imgBoxGrayFill, pts=[c], color=(0, 0, 0))
+            cv2.circle(imgBoxGrayFill, (int(x), int(y)), int(rad), color=(0, 0, 0), thickness=-1, lineType=8, shift=0)
 
     # count bubbles
     grayThresh = 150
@@ -129,18 +143,19 @@ def FindBubbles(imgBox):
             bubbleCount += 1
 
     if bubbleCount != 132:
-        print(bubbleCount)
+        isError = True
         print("Error incorrect bubble count")
 
     imgBubbleHighlight = imgBox.copy()
     cv2.drawContours(imgBubbleHighlight, bubbleContours, -1, (0, 0, 255), 3)
 
-    cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
-
-    return bubbleContours
+    # cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
+    return bubbleContours, isError
 
 
 def ReadScoutingFormData(imgBox, bubbleContours):
+    isError = False
+
     bubbleY = []
     for c in bubbleContours:
         (x, y), rad = cv2.minEnclosingCircle(c)
@@ -162,6 +177,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     bubbleMatrix.append(bubbleCount)
 
     if len(bubbleMatrix) != 19:
+        isError = True
         print("Error incorrect row count")
 
     # find row values
@@ -196,45 +212,65 @@ def ReadScoutingFormData(imgBox, bubbleContours):
 
         bubbleMatrix2.append(rowValue)
         totalBubbleCount += c2
-    print(bubbleMatrix2)
+
+    # convert bubble data to form data
+    scoutingFormData = ScoutingFormData()
+    if bubbleMatrix2[0] and bubbleMatrix2[1] and bubbleMatrix2[2] and bubbleMatrix2[3]:
+        scoutingFormData.team = \
+            (bubbleMatrix2[0] - 1) * 1000 \
+            + (bubbleMatrix2[1] - 1) * 100 \
+            + (bubbleMatrix2[2] - 1) * 10 \
+            + (bubbleMatrix2[3] - 1)
+    else:
+        isError = True
+        print("Error team not defined")
+
+    if bubbleMatrix2[4] and bubbleMatrix2[5] and bubbleMatrix2[6]:
+        scoutingFormData.match = \
+            (bubbleMatrix2[4] - 1) * 100 \
+            + (bubbleMatrix2[5] - 1) * 10 \
+            + (bubbleMatrix2[6] - 1)
+    else:
+        isError = True
+        print("Error match not defined")
+
+    if bubbleMatrix2[7]:
+        scoutingFormData.color = bubbleMatrix2[7] - 1
+    else:
+        isError = True
+        print("Error color not defined")
+
+    scoutingFormData.habCross = FormatBlankData(bubbleMatrix2[8])
+    scoutingFormData.hatchLow = FormatBlankData(bubbleMatrix2[9])
+    scoutingFormData.hatchHigh = FormatBlankData(bubbleMatrix2[10])
+    scoutingFormData.cargoLow = FormatBlankData(bubbleMatrix2[11])
+    scoutingFormData.cargoHigh = FormatBlankData(bubbleMatrix2[12])
+    scoutingFormData.habClimb = FormatBlankData(bubbleMatrix2[13])
+    scoutingFormData.foul = FormatBlankData(bubbleMatrix2[14])
+    scoutingFormData.card = FormatBlankData(bubbleMatrix2[15])
+    scoutingFormData.disabled = FormatBlankData(bubbleMatrix2[16])
+    scoutingFormData.playedDefense = FormatBlankData(bubbleMatrix2[17])
+    scoutingFormData.defenseAgainst = FormatBlankData(bubbleMatrix2[18])
+
+    return scoutingFormData, isError
 
 
 if __name__== "__main__":
+    isError = False
+
     img = cv2.imread("C:/frc-2019-scout/Filled Out 2481 Scouting Form 2019.jpeg", cv2.IMREAD_COLOR)
     if img is None:
+        isError = True
         print("Error failed to read image")
 
-    imgBox = FitToQuestionBox(img)
-    bubbleContours = FindBubbles(imgBox)
-    ReadScoutingFormData(imgBox, bubbleContours)
+    imgBox, tempIsError = FitToQuestionBox(img)
+    isError = isError and tempIsError
+
+    bubbleContours, tempIsError = FindBubbles(imgBox)
+    isError = isError and tempIsError
+
+    scoutingFormData, tempIsError = ReadScoutingFormData(imgBox, bubbleContours)
+    isError = isError and tempIsError
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-
-
-#
-# for c2 in qMatrix:
-#     qCnt = 0
-#     qValue = []
-#     rowQContours = sorted(qContours[c2 - 1:c2], key=lambda ctr: cv2.boundingRect(ctr)[0])
-#     print(c2 - 1, c2)
-#     for c in rowQContours:
-#         qCnt += 1
-#         mask = np.zeros(imgThresh.shape, dtype="uint8")
-#         cv2.drawContours(mask, [c], -1, 255, -1)
-#
-#         mask = cv2.bitwise_and(imgThresh, imgThresh, mask=mask)
-#         total = cv2.countNonZero(mask)
-#         if total > qFillThresh:
-#             qValue = qCnt
-#     qMatrix2.append(qValue)
-#
-# print(qMatrix2)
-#
-# imgThresh = cv2.cvtColor(imgThresh, cv2.COLOR_GRAY2RGB)
-# cv2.drawContours(imgThresh, qContours, -1, (0, 255, 0), 1)
-#
-# # cv2.imshow("img", img)
-# # cv2.imshow("imgThresh", imgThresh)
-
