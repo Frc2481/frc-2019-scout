@@ -30,7 +30,7 @@ def FormatBlankData(data):
 
 
 def ResizeImg(img, heightDesired):
-    isError = False
+    # isError = False
 
     height, width, channels = img.shape
 
@@ -38,10 +38,11 @@ def ResizeImg(img, heightDesired):
     widthDesired = heightDesired * ratio
 
     img = cv2.resize(img, (int(widthDesired), int(heightDesired)))
-    return img, isError
+    # return img, isError
+    return img
 
 def FitToQuestionBox(img):
-    isError = False
+    # isError = False
 
     height = 600
     img = ResizeImg(img, height)
@@ -55,7 +56,7 @@ def FitToQuestionBox(img):
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
 
     # check contour is rectangle
-    vertices = 0
+    vertices = []
     for c in contours:
         perimeter = cv2.arcLength(c, True)
         tempVertices = cv2.approxPolyDP(c, 0.02 * perimeter, True)
@@ -64,8 +65,8 @@ def FitToQuestionBox(img):
             vertices = tempVertices
             break
 
-    if vertices == 0:
-        isError = True
+    if len(vertices) != 4:
+        # isError = True
         print("Error question box not found")
 
     imgBoxHighlight = img.copy()
@@ -106,11 +107,12 @@ def FitToQuestionBox(img):
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_180)
 
     # cv2.imshow("imgBoxHighlight", imgBoxHighlight)
-    return imgBox, isError
+    # return imgBox, isError
+    return imgBox
 
 
 def FindBubbles(imgBox):
-    isError = False
+    # isError = False
 
     # fill in bubbles
     imgBoxGray = cv2.cvtColor(imgBox, cv2.COLOR_BGR2GRAY)
@@ -143,19 +145,20 @@ def FindBubbles(imgBox):
             bubbleCount += 1
 
     if bubbleCount != 132:
-        isError = True
+        # isError = True
         print("Error incorrect bubble count")
 
     imgBubbleHighlight = imgBox.copy()
     cv2.drawContours(imgBubbleHighlight, bubbleContours, -1, (0, 0, 255), 3)
 
     # cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
-    return bubbleContours, isError
+    # return bubbleContours, isError
+    return bubbleContours
 
 
 def ReadScoutingFormData(imgBox, bubbleContours):
     isError = False
-
+    #
     bubbleY = []
     for c in bubbleContours:
         (x, y), rad = cv2.minEnclosingCircle(c)
@@ -177,7 +180,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     bubbleMatrix.append(bubbleCount)
 
     if len(bubbleMatrix) != 19:
-        isError = True
+        # isError = True
         print("Error incorrect row count")
 
     # find row values
@@ -222,7 +225,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
             + (bubbleMatrix2[2] - 1) * 10 \
             + (bubbleMatrix2[3] - 1)
     else:
-        isError = True
+        # isError = True
         print("Error team not defined")
 
     if bubbleMatrix2[4] and bubbleMatrix2[5] and bubbleMatrix2[6]:
@@ -231,13 +234,13 @@ def ReadScoutingFormData(imgBox, bubbleContours):
             + (bubbleMatrix2[5] - 1) * 10 \
             + (bubbleMatrix2[6] - 1)
     else:
-        isError = True
+        # isError = True
         print("Error match not defined")
 
     if bubbleMatrix2[7]:
         scoutingFormData.color = bubbleMatrix2[7] - 1
     else:
-        isError = True
+        # isError = True
         print("Error color not defined")
 
     scoutingFormData.habCross = FormatBlankData(bubbleMatrix2[8])
@@ -252,25 +255,26 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     scoutingFormData.playedDefense = FormatBlankData(bubbleMatrix2[17])
     scoutingFormData.defenseAgainst = FormatBlankData(bubbleMatrix2[18])
 
-    return scoutingFormData, isError
+    # return scoutingFormData, isError
+    return scoutingFormData
 
 
 if __name__== "__main__":
-    isError = False
+    # isError = False
 
     img = cv2.imread("C:/frc-2019-scout/Filled Out 2481 Scouting Form 2019.jpeg", cv2.IMREAD_COLOR)
     if img is None:
-        isError = True
+        # isError = True
         print("Error failed to read image")
 
-    imgBox, tempIsError = FitToQuestionBox(img)
-    isError = isError and tempIsError
+    imgBox = FitToQuestionBox(img)
+    # isError = isError and tempIsError
 
-    bubbleContours, tempIsError = FindBubbles(imgBox)
-    isError = isError and tempIsError
+    bubbleContours = FindBubbles(imgBox)
+    # isError = isError and tempIsError
 
-    scoutingFormData, tempIsError = ReadScoutingFormData(imgBox, bubbleContours)
-    isError = isError and tempIsError
+    scoutingFormData = ReadScoutingFormData(imgBox, bubbleContours)
+    # isError = isError and tempIsError
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
