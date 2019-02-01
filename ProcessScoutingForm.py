@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib as plt
 import FourPointTransform
+import os
 
 class ScoutingFormData:
     def __init__(self):
@@ -30,7 +31,7 @@ def FormatBlankData(data):
 
 
 def ResizeImg(img, heightDesired):
-    # isError = False
+    isError = False
 
     height, width, channels = img.shape
 
@@ -38,14 +39,15 @@ def ResizeImg(img, heightDesired):
     widthDesired = heightDesired * ratio
 
     img = cv2.resize(img, (int(widthDesired), int(heightDesired)))
-    # return img, isError
-    return img
+    return img, isError
+
 
 def FitToQuestionBox(img):
-    # isError = False
+    isError = False
 
     height = 600
-    img = ResizeImg(img, height)
+    img, tempIsError = ResizeImg(img, height)
+    isError = isError and tempIsError
 
     # find largest contour
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -66,23 +68,26 @@ def FitToQuestionBox(img):
             break
 
     if len(vertices) != 4:
-        # isError = True
-        print("Error question box not found")
+        isError = True
+        print("\033[91m" + "Error question box not found" + "\033[0m")
 
     imgBoxHighlight = img.copy()
     cv2.drawContours(imgBoxHighlight, [vertices], -1, (0, 255, 0), 3)
 
     # transform and crop to question box
     imgBox = FourPointTransform.FourPointTransform(img, vertices.reshape(4, 2))
-    imgBox = ResizeImg(imgBox, height)
+    imgBox, tempIsError = ResizeImg(imgBox, height)
+    isError = isError and tempIsError
 
     # rotate from landscape to portrait
     if imgBox.shape[0] < imgBox.shape[1]:
         imgBoxHighlight = cv2.rotate(imgBoxHighlight, cv2.ROTATE_90_CLOCKWISE)
-        imgBoxHighlight = ResizeImg(imgBoxHighlight, imgBoxHighlight.shape[1])
+        imgBoxHighlight, tempIsError = ResizeImg(imgBoxHighlight, imgBoxHighlight.shape[1])
+        isError = isError and tempIsError
 
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_90_CLOCKWISE)
-        imgBox = ResizeImg(imgBox, imgBox.shape[1])
+        imgBox, isError = ResizeImg(imgBox, imgBox.shape[1])
+        isError = isError and tempIsError
 
     # look for question box top
     grayThresh = 150
@@ -107,12 +112,11 @@ def FitToQuestionBox(img):
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_180)
 
     # cv2.imshow("imgBoxHighlight", imgBoxHighlight)
-    # return imgBox, isError
-    return imgBox
+    return imgBox, isError
 
 
 def FindBubbles(imgBox):
-    # isError = False
+    isError = False
 
     # fill in bubbles
     imgBoxGray = cv2.cvtColor(imgBox, cv2.COLOR_BGR2GRAY)
@@ -144,21 +148,21 @@ def FindBubbles(imgBox):
             bubbleContours.append(c)
             bubbleCount += 1
 
-    if bubbleCount != 132:
-        # isError = True
-        print("Error incorrect bubble count")
+    expectedBubbleCount = 132
+    if bubbleCount != expectedBubbleCount:
+        isError = True
+        print("\033[91m" + "Error incorrect bubble count" + "\033[0m")
 
     imgBubbleHighlight = imgBox.copy()
     cv2.drawContours(imgBubbleHighlight, bubbleContours, -1, (0, 0, 255), 3)
 
     # cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
-    # return bubbleContours, isError
-    return bubbleContours
+    return bubbleContours, isError
 
 
 def ReadScoutingFormData(imgBox, bubbleContours):
     isError = False
-    #
+
     bubbleY = []
     for c in bubbleContours:
         (x, y), rad = cv2.minEnclosingCircle(c)
@@ -179,9 +183,10 @@ def ReadScoutingFormData(imgBox, bubbleContours):
         yOld = y
     bubbleMatrix.append(bubbleCount)
 
-    if len(bubbleMatrix) != 19:
-        # isError = True
-        print("Error incorrect row count")
+    expectedBubbleMatrix = [10, 10, 10, 10, 10, 10, 10, 2, 2, 12, 8, 12, 8, 3, 10, 2, 1, 1, 1]
+    if bubbleMatrix != expectedBubbleMatrix:
+        isError = True
+        print("\033[91m" + "Error incorrect bubble matrix" + "\033[0m")
 
     # find row values
     grayThresh = 150
@@ -225,8 +230,8 @@ def ReadScoutingFormData(imgBox, bubbleContours):
             + (bubbleMatrix2[2] - 1) * 10 \
             + (bubbleMatrix2[3] - 1)
     else:
-        # isError = True
-        print("Error team not defined")
+        isError = True
+        print("\033[91m" + "Error team not defined" + "\033[0m")
 
     if bubbleMatrix2[4] and bubbleMatrix2[5] and bubbleMatrix2[6]:
         scoutingFormData.match = \
@@ -234,14 +239,14 @@ def ReadScoutingFormData(imgBox, bubbleContours):
             + (bubbleMatrix2[5] - 1) * 10 \
             + (bubbleMatrix2[6] - 1)
     else:
-        # isError = True
-        print("Error match not defined")
+        isError = True
+        print("\033[91m" + "Error match not defined")
 
     if bubbleMatrix2[7]:
         scoutingFormData.color = bubbleMatrix2[7] - 1
     else:
-        # isError = True
-        print("Error color not defined")
+        isError = True
+        print("\033[91m" + "Error color not defined" + "\033[0m")
 
     scoutingFormData.habCross = FormatBlankData(bubbleMatrix2[8])
     scoutingFormData.hatchLow = FormatBlankData(bubbleMatrix2[9])
@@ -255,26 +260,51 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     scoutingFormData.playedDefense = FormatBlankData(bubbleMatrix2[17])
     scoutingFormData.defenseAgainst = FormatBlankData(bubbleMatrix2[18])
 
-    # return scoutingFormData, isError
-    return scoutingFormData
+    return scoutingFormData, isError
 
 
 if __name__== "__main__":
-    # isError = False
+    workDir = os.getcwd()
+    unprocessedDirName = os.path.join(workDir, "Unprocessed Forms")
+    processedDirName = os.path.join(workDir, "Processed Forms")
+    
+    # loop through all images
+    unprocessedDir = os.fsencode(unprocessedDirName)
+    for file in os.listdir(unprocessedDir):
+        unprocessedFilename = os.fsdecode(file)
+        unprocessedFilepath = os.path.join(unprocessedDirName, unprocessedFilename)
+        if unprocessedFilename.endswith(".jpeg"):
+            print()
+            print("\033[95m" + "Processing " + unprocessedFilename + "..." + "\033[0m")
+            
+            img = cv2.imread(unprocessedFilepath, cv2.IMREAD_COLOR)
+            if img is None:
+                print("\033[91m" + "Error failed to read image" + "\033[0m")
+                continue
 
-    img = cv2.imread("C:/frc-2019-scout/Filled Out 2481 Scouting Form 2019.jpeg", cv2.IMREAD_COLOR)
-    if img is None:
-        # isError = True
-        print("Error failed to read image")
+            imgBox, isError = FitToQuestionBox(img)
+            if isError:
+                continue
 
-    imgBox = FitToQuestionBox(img)
-    # isError = isError and tempIsError
+            bubbleContours, isError = FindBubbles(imgBox)
+            if isError:
+                continue
 
-    bubbleContours = FindBubbles(imgBox)
-    # isError = isError and tempIsError
+            scoutingFormData, isError = ReadScoutingFormData(imgBox, bubbleContours)
+            if isError:
+                continue
+            
+            # save image to processed dir
+            processedFilename = str(scoutingFormData.team) + "_" + str(scoutingFormData.match) + ".jpeg"
+            processedFilepath = os.path.join(processedDirName, processedFilename)
+            if os.path.isfile(processedFilename):
+                os.remove(processedFilename)
+            os.rename(unprocessedFilename, processedFilename)
+            
+            print("\033[92m" + "Processed " + processedFilename + "\033[0m")
 
-    scoutingFormData = ReadScoutingFormData(imgBox, bubbleContours)
-    # isError = isError and tempIsError
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+            
+        else:
+            continue
