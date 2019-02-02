@@ -3,22 +3,25 @@ import numpy as np
 import matplotlib as plt
 import FourPointTransform
 import os
+import csv
+import copy
 
 class ScoutingFormData:
     def __init__(self):
-        self.team = []
-        self.match = []
-        self.color = []
-        self.habCross = []
-        self.hatchLow = []
-        self.cargoLow = []
-        self.cargoHigh = []
-        self.habClimb = []
-        self.foul = []
-        self.card = []
-        self.disabled = []
-        self.playedDefense = []
-        self.defenseAgainst = []
+        self.team = ""
+        self.match = ""
+        self.color = ""
+        self.habCross = ""
+        self.hatchLow = ""
+        self.hatchHigh = ""
+        self.cargoLow = ""
+        self.cargoHigh = ""
+        self.habClimb = ""
+        self.foul = ""
+        self.card = ""
+        self.disabled = ""
+        self.playedDefense = ""
+        self.defenseAgainst = ""
 
 
 def FormatBlankData(data):
@@ -263,12 +266,160 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     return scoutingFormData, isError
 
 
+def CreateOutputFileFromMatchSchedule(matchScheduleFilepath, outputFilepath):
+    # read match schedule
+    if not os.path.isfile(matchScheduleFilepath):
+        print("\033[91m" + "Error failed to read match schedule" + "\033[0m")
+        return
+    
+    # create output file if haven't already
+    if os.path.isfile(outputFilepath):
+        return
+    
+    print()
+    print("\033[95m" + "Processing match schedule..." + "\033[0m")
+    
+    match = ScoutingFormData()
+    matchList = []
+    
+    with open(matchScheduleFilepath, 'r',  newline="") as csvFile:
+        csvReader = csv.reader(csvFile, delimiter=",")
+
+        # skip headers
+        next(csvReader)
+
+        # loop through rows and read matches
+        for row in csvReader:
+            match.match = int(row[0].replace("Qualification ",""))
+            match.team = int(row[2])
+            match.color = 0 # red
+            matchList.append(copy.deepcopy(match))
+            
+            match.team = int(row[3])
+            match.color = 0 # red
+            matchList.append(copy.deepcopy(match))
+            
+            match.team = int(row[4])
+            match.color = 0 # red
+            matchList.append(copy.deepcopy(match))
+            
+            match.team = int(row[5])
+            match.color = 1 # blue
+            matchList.append(copy.deepcopy(match))
+            
+            match.team = int(row[6])
+            match.color = 1 # blue
+            matchList.append(copy.deepcopy(match))
+            
+            match.team = int(row[7])
+            match.color = 1 # blue
+            matchList.append(copy.deepcopy(match))
+
+    with open(outputFilepath, "w",  newline="") as csvFile:
+        csvWriter = csv.writer(csvFile)
+        
+        # write headers
+        csvWriter.writerow([
+            "Match",
+            "Team",
+            "Color",
+            "HAB Cross",
+            "Hatch Low",
+            "Hatch High",
+            "Cargo Low",
+            "Cargo High",
+            "HAB Climb",
+            "Foul",
+            "Card",
+            "Disabled",
+            "Played Defense",
+            "Defense Against",
+        ])
+        
+        # write matches
+        for match in matchList:
+            csvWriter.writerow([
+                match.match,
+                match.team,
+                match.color,
+                match.habCross,
+                match.hatchLow,
+                match.hatchHigh,
+                match.cargoLow,
+                match.cargoHigh,
+                match.habClimb,
+                match.foul,
+                match.card,
+                match.disabled,
+                match.playedDefense,
+                match.defenseAgainst,
+            ])
+
+    print("\033[92m" + "Processed match schedule" + "\033[0m")
+    return
+
+
+def WriteScoutingFormDataToOutputFile(scoutingFormData, outputFilepath):
+    with open(outputFilepath, "r",  newline="") as csvFile:
+        csvReader = csv.reader(csvFile, delimiter=",")
+        tempData = []
+        
+        # loop through rows and find match
+        matchFound = False
+        rowCnt = 0
+        for row in csvReader:
+            # skip headers
+            if not rowCnt == 0:
+                # write form data to output file if match found
+                if (int(row[0]) == scoutingFormData.match) and (int(row[1]) == scoutingFormData.team):
+                    matchFound = True
+                    tempRow = row
+                    tempRowCnt = rowCnt
+                    tempRow[0] = scoutingFormData.match
+                    tempRow[1] = scoutingFormData.team
+                    tempRow[2] = scoutingFormData.color
+                    tempRow[3] = scoutingFormData.habCross
+                    tempRow[4] = scoutingFormData.hatchLow
+                    tempRow[5] = scoutingFormData.hatchHigh
+                    tempRow[6] = scoutingFormData.cargoLow
+                    tempRow[7] = scoutingFormData.cargoHigh
+                    tempRow[8] = scoutingFormData.habClimb
+                    tempRow[9] = scoutingFormData.foul
+                    tempRow[10] = scoutingFormData.card
+                    tempRow[11] = scoutingFormData.disabled
+                    tempRow[12] = scoutingFormData.playedDefense
+                    tempRow[13] = scoutingFormData.defenseAgainst
+
+            tempData.append(row)
+            rowCnt += 1
+
+    if not matchFound:
+        print("\033[91m" + "Error match not found in match schedule" + "\033[0m")
+        return True
+
+    with open(outputFilepath, "w",  newline="") as csvFile:
+        csvWriter = csv.writer(csvFile)
+        tempData[tempRowCnt] = tempRow
+        csvWriter.writerows(tempData)
+
+    return False
+
+
 if __name__== "__main__":
     workDir = os.getcwd()
+
+    # read match schedule and create output file
+    matchScheduleFilename = "Match Schedule.csv"
+    matchScheduleFilepath = os.path.join(workDir, matchScheduleFilename)
+    
+    outputFilename = "RawFormData.csv"
+    outputFilepath = os.path.join(workDir, outputFilename)
+    
+    CreateOutputFileFromMatchSchedule(matchScheduleFilepath, outputFilepath)
+    
+    # loop through unprocessed images
     unprocessedDirName = os.path.join(workDir, "Unprocessed Forms")
     processedDirName = os.path.join(workDir, "Processed Forms")
-    
-    # loop through all images
     unprocessedDir = os.fsencode(unprocessedDirName)
     for file in os.listdir(unprocessedDir):
         unprocessedFilename = os.fsdecode(file)
@@ -293,13 +444,17 @@ if __name__== "__main__":
             scoutingFormData, isError = ReadScoutingFormData(imgBox, bubbleContours)
             if isError:
                 continue
+                
+            isError = WriteScoutingFormDataToOutputFile(scoutingFormData, outputFilepath)
+            if isError:
+                continue
             
-            # save image to processed dir
+            # move image to processed
             processedFilename = str(scoutingFormData.team) + "_" + str(scoutingFormData.match) + ".jpeg"
             processedFilepath = os.path.join(processedDirName, processedFilename)
-            if os.path.isfile(processedFilename):
-                os.remove(processedFilename)
-            os.rename(unprocessedFilename, processedFilename)
+            if os.path.isfile(processedFilepath):
+                os.remove(processedFilepath)
+            os.rename(unprocessedFilepath, processedFilepath)
             
             print("\033[92m" + "Processed " + processedFilename + "\033[0m")
 
