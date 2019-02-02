@@ -29,9 +29,7 @@ class ScoutingFormData:
 
 
 def FormatBlankData(data):
-    if data:
-        data += 1
-    else:
+    if not data:
         data = 0
 
     return data
@@ -118,7 +116,7 @@ def FitToQuestionBox(img):
         imgBoxHighlight = cv2.rotate(imgBoxHighlight, cv2.ROTATE_180)
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_180)
 
-    cv2.imshow("imgBoxHighlight", imgBoxHighlight)
+    # cv2.imshow("imgBoxHighlight", imgBoxHighlight)
     return imgBox, isError
 
 
@@ -155,7 +153,7 @@ def FindBubbles(imgBox):
             bubbleContours.append(c)
             bubbleCount += 1
 
-    expectedBubbleCount = 146
+    expectedBubbleCount = 148
     if bubbleCount != expectedBubbleCount:
         isError = True
         print("\033[91m" + "Error incorrect bubble count" + "\033[0m")
@@ -163,7 +161,7 @@ def FindBubbles(imgBox):
     imgBubbleHighlight = imgBox.copy()
     cv2.drawContours(imgBubbleHighlight, bubbleContours, -1, (0, 0, 255), 3)
 
-    cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
+    # cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
     return bubbleContours, isError
 
 
@@ -200,7 +198,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     imgBoxThresh = cv2.threshold(imgBox, grayThresh, 255, cv2.THRESH_BINARY_INV)[1]
     imgBoxThresh = cv2.cvtColor(imgBoxThresh, cv2.COLOR_BGR2GRAY)
 
-    bubbleFillThresh = 200
+    bubbleFillThresh = 160
     bubbleMatrix2 = []
     totalBubbleCount = 0
     for c2 in bubbleMatrix:
@@ -223,6 +221,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
             fillPixels = cv2.countNonZero(mask)
 
             if fillPixels > bubbleFillThresh:
+                print(fillPixels)
                 rowValue = bubbleCount
 
         bubbleMatrix2.append(rowValue)
@@ -256,16 +255,20 @@ def ReadScoutingFormData(imgBox, bubbleContours):
         print("\033[91m" + "Error color not defined" + "\033[0m")
 
     scoutingFormData.habCross = FormatBlankData(bubbleMatrix2[8])
-    scoutingFormData.hatchLow = FormatBlankData(bubbleMatrix2[9])
-    scoutingFormData.hatchHigh = FormatBlankData(bubbleMatrix2[10])
-    scoutingFormData.cargoLow = FormatBlankData(bubbleMatrix2[11])
-    scoutingFormData.cargoHigh = FormatBlankData(bubbleMatrix2[12])
-    scoutingFormData.habClimb = FormatBlankData(bubbleMatrix2[13])
-    scoutingFormData.foul = FormatBlankData(bubbleMatrix2[14])
-    scoutingFormData.card = FormatBlankData(bubbleMatrix2[15])
-    scoutingFormData.disabled = FormatBlankData(bubbleMatrix2[16])
-    scoutingFormData.playedDefense = FormatBlankData(bubbleMatrix2[17])
-    scoutingFormData.defenseAgainst = FormatBlankData(bubbleMatrix2[18])
+    scoutingFormData.hatchLowSandstorm = FormatBlankData(bubbleMatrix2[9])
+    scoutingFormData.hatchHighSandstorm = FormatBlankData(bubbleMatrix2[10])
+    scoutingFormData.cargoLowSandstorm = FormatBlankData(bubbleMatrix2[11])
+    scoutingFormData.cargoHighSandstorm = FormatBlankData(bubbleMatrix2[12])
+    scoutingFormData.hatchLow = FormatBlankData(bubbleMatrix2[13])
+    scoutingFormData.hatchHigh = FormatBlankData(bubbleMatrix2[14])
+    scoutingFormData.cargoLow = FormatBlankData(bubbleMatrix2[15])
+    scoutingFormData.cargoHigh = FormatBlankData(bubbleMatrix2[16])
+    scoutingFormData.habClimb = FormatBlankData(bubbleMatrix2[17])
+    scoutingFormData.foul = FormatBlankData(bubbleMatrix2[18])
+    scoutingFormData.card = FormatBlankData(bubbleMatrix2[19])
+    scoutingFormData.disabled = FormatBlankData(bubbleMatrix2[20])
+    scoutingFormData.playedDefense = FormatBlankData(bubbleMatrix2[21])
+    scoutingFormData.defenseAgainst = FormatBlankData(bubbleMatrix2[22])
 
     return scoutingFormData, isError
 
@@ -428,7 +431,7 @@ if __name__== "__main__":
     matchScheduleFilename = "Match Schedule.csv"
     matchScheduleFilepath = os.path.join(workDir, matchScheduleFilename)
     
-    outputFilename = "RawFormData.csv"
+    outputFilename = "Raw Form Data.csv"
     outputFilepath = os.path.join(workDir, outputFilename)
     
     CreateOutputFileFromMatchSchedule(matchScheduleFilepath, outputFilepath)
@@ -477,5 +480,5 @@ if __name__== "__main__":
         else:
             continue
 
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
