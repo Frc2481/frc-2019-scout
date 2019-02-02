@@ -12,6 +12,10 @@ class ScoutingFormData:
         self.match = ""
         self.color = ""
         self.habCross = ""
+        self.hatchLowSandstorm = ""
+        self.hatchHighSandstorm = ""
+        self.cargoLowSandstorm = ""
+        self.cargoHighSandstorm = ""
         self.hatchLow = ""
         self.hatchHigh = ""
         self.cargoLow = ""
@@ -114,7 +118,7 @@ def FitToQuestionBox(img):
         imgBoxHighlight = cv2.rotate(imgBoxHighlight, cv2.ROTATE_180)
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_180)
 
-    # cv2.imshow("imgBoxHighlight", imgBoxHighlight)
+    cv2.imshow("imgBoxHighlight", imgBoxHighlight)
     return imgBox, isError
 
 
@@ -151,7 +155,7 @@ def FindBubbles(imgBox):
             bubbleContours.append(c)
             bubbleCount += 1
 
-    expectedBubbleCount = 132
+    expectedBubbleCount = 146
     if bubbleCount != expectedBubbleCount:
         isError = True
         print("\033[91m" + "Error incorrect bubble count" + "\033[0m")
@@ -159,7 +163,7 @@ def FindBubbles(imgBox):
     imgBubbleHighlight = imgBox.copy()
     cv2.drawContours(imgBubbleHighlight, bubbleContours, -1, (0, 0, 255), 3)
 
-    # cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
+    cv2.imshow("imgBubbleHighlight", imgBubbleHighlight)
     return bubbleContours, isError
 
 
@@ -186,7 +190,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
         yOld = y
     bubbleMatrix.append(bubbleCount)
 
-    expectedBubbleMatrix = [10, 10, 10, 10, 10, 10, 10, 2, 2, 12, 8, 12, 8, 3, 10, 2, 1, 1, 1]
+    expectedBubbleMatrix = [10, 10, 10, 10, 10, 10, 10, 2, 2, 4, 4, 4, 4, 12, 8, 12, 8, 3, 10, 2, 1, 1, 1]
     if bubbleMatrix != expectedBubbleMatrix:
         isError = True
         print("\033[91m" + "Error incorrect bubble matrix" + "\033[0m")
@@ -324,6 +328,10 @@ def CreateOutputFileFromMatchSchedule(matchScheduleFilepath, outputFilepath):
             "Team",
             "Color",
             "HAB Cross",
+            "Hatch Low Sandstorm",
+            "Hatch High Sandstorm",
+            "Cargo Low Sandstorm",
+            "Cargo High Sandstorm",
             "Hatch Low",
             "Hatch High",
             "Cargo Low",
@@ -343,6 +351,10 @@ def CreateOutputFileFromMatchSchedule(matchScheduleFilepath, outputFilepath):
                 match.team,
                 match.color,
                 match.habCross,
+                match.hatchLowSandstorm,
+                match.hatchHighSandstorm,
+                match.cargoLowSandstorm,
+                match.cargoHighSandstorm,
                 match.hatchLow,
                 match.hatchHigh,
                 match.cargoLow,
@@ -379,16 +391,20 @@ def WriteScoutingFormDataToOutputFile(scoutingFormData, outputFilepath):
                     tempRow[1] = scoutingFormData.team
                     tempRow[2] = scoutingFormData.color
                     tempRow[3] = scoutingFormData.habCross
-                    tempRow[4] = scoutingFormData.hatchLow
-                    tempRow[5] = scoutingFormData.hatchHigh
-                    tempRow[6] = scoutingFormData.cargoLow
-                    tempRow[7] = scoutingFormData.cargoHigh
-                    tempRow[8] = scoutingFormData.habClimb
-                    tempRow[9] = scoutingFormData.foul
-                    tempRow[10] = scoutingFormData.card
-                    tempRow[11] = scoutingFormData.disabled
-                    tempRow[12] = scoutingFormData.playedDefense
-                    tempRow[13] = scoutingFormData.defenseAgainst
+                    tempRow[4] = scoutingFormData.hatchLowSandstorm
+                    tempRow[5] = scoutingFormData.hatchHighSandstorm
+                    tempRow[6] = scoutingFormData.cargoLowSandstorm
+                    tempRow[7] = scoutingFormData.cargoHighSandstorm
+                    tempRow[8] = scoutingFormData.hatchLow
+                    tempRow[9] = scoutingFormData.hatchHigh
+                    tempRow[10] = scoutingFormData.cargoLow
+                    tempRow[11] = scoutingFormData.cargoHigh
+                    tempRow[12] = scoutingFormData.habClimb
+                    tempRow[13] = scoutingFormData.foul
+                    tempRow[14] = scoutingFormData.card
+                    tempRow[15] = scoutingFormData.disabled
+                    tempRow[16] = scoutingFormData.playedDefense
+                    tempRow[17] = scoutingFormData.defenseAgainst
 
             tempData.append(row)
             rowCnt += 1
@@ -424,7 +440,7 @@ if __name__== "__main__":
     for file in os.listdir(unprocessedDir):
         unprocessedFilename = os.fsdecode(file)
         unprocessedFilepath = os.path.join(unprocessedDirName, unprocessedFilename)
-        if unprocessedFilename.endswith(".jpeg"):
+        if unprocessedFilename.endswith(".jpg") or unprocessedFilename.endswith(".jpeg"):
             print()
             print("\033[95m" + "Processing " + unprocessedFilename + "..." + "\033[0m")
             
@@ -457,9 +473,9 @@ if __name__== "__main__":
             os.rename(unprocessedFilepath, processedFilepath)
             
             print("\033[92m" + "Processed " + processedFilename + "\033[0m")
-
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
             
         else:
             continue
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
