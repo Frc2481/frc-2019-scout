@@ -1,4 +1,4 @@
-Match,Team,Color,HAB Cross,Hatch Low Sandstorm,Hatch High Sandstorm,Cargo Low Sandstorm,Cargo High Sandstorm,Hatch Low,Hatch High,Cargo Low,Cargo High,HAB Climb,Foul,Card,Disabled,Played Defense,Defense Against
+Match,Team,Color,HAB Cross,Hatch Low Sandstorm,Hatch High Sandstorm,Cargo Low Sandstorm,Cargo High Sandstorm,Hatch Low Teleop,Hatch High Teleop,Cargo Low Teleop,Cargo High Teleop,HAB Climb,Foul,Card,Disabled,Played Defense,Defense Against
 1,6651,0,1,1,0,2,0,5,1,3,1,1,2,0,0,0,0
 1,4296,0,2,2,0,1,0,5,2,2,0,2,1,0,0,0,1
 1,2481,0,2,1,0,1,0,4,0,4,0,3,1,0,0,0,1

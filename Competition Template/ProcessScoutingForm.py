@@ -19,10 +19,10 @@ class ScoutingFormData:
         self.hatchHighSandstorm = ""
         self.cargoLowSandstorm = ""
         self.cargoHighSandstorm = ""
-        self.hatchLow = ""
-        self.hatchHigh = ""
-        self.cargoLow = ""
-        self.cargoHigh = ""
+        self.hatchLowTeleop = ""
+        self.hatchHighTeleop = ""
+        self.cargoLowTeleop = ""
+        self.cargoHighTeleop = ""
         self.habClimb = ""
         self.foul = ""
         self.card = ""
@@ -261,10 +261,10 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     scoutingFormData.hatchHighSandstorm = FormatBlankData(bubbleMatrix2[10])
     scoutingFormData.cargoLowSandstorm = FormatBlankData(bubbleMatrix2[11])
     scoutingFormData.cargoHighSandstorm = FormatBlankData(bubbleMatrix2[12])
-    scoutingFormData.hatchLow = FormatBlankData(bubbleMatrix2[13])
-    scoutingFormData.hatchHigh = FormatBlankData(bubbleMatrix2[14])
-    scoutingFormData.cargoLow = FormatBlankData(bubbleMatrix2[15])
-    scoutingFormData.cargoHigh = FormatBlankData(bubbleMatrix2[16])
+    scoutingFormData.hatchLowTeleop = FormatBlankData(bubbleMatrix2[13])
+    scoutingFormData.hatchHighTeleop = FormatBlankData(bubbleMatrix2[14])
+    scoutingFormData.cargoLowTeleop = FormatBlankData(bubbleMatrix2[15])
+    scoutingFormData.cargoHighTeleop = FormatBlankData(bubbleMatrix2[16])
     scoutingFormData.habClimb = FormatBlankData(bubbleMatrix2[17])
     scoutingFormData.foul = FormatBlankData(bubbleMatrix2[18])
     scoutingFormData.card = FormatBlankData(bubbleMatrix2[19])
@@ -337,10 +337,10 @@ def CreateOutputFileFromMatchSchedule(matchScheduleFilepath, outputFilepath):
             "Hatch High Sandstorm",
             "Cargo Low Sandstorm",
             "Cargo High Sandstorm",
-            "Hatch Low",
-            "Hatch High",
-            "Cargo Low",
-            "Cargo High",
+            "Hatch Low Teleop",
+            "Hatch High Teleop",
+            "Cargo Low Teleop",
+            "Cargo High Teleop",
             "HAB Climb",
             "Foul",
             "Card",
@@ -360,10 +360,10 @@ def CreateOutputFileFromMatchSchedule(matchScheduleFilepath, outputFilepath):
                 match.hatchHighSandstorm,
                 match.cargoLowSandstorm,
                 match.cargoHighSandstorm,
-                match.hatchLow,
-                match.hatchHigh,
-                match.cargoLow,
-                match.cargoHigh,
+                match.hatchLowTeleop,
+                match.hatchHighTeleop,
+                match.cargoLowTeleop,
+                match.cargoHighTeleop,
                 match.habClimb,
                 match.foul,
                 match.card,
@@ -400,10 +400,10 @@ def WriteScoutingFormDataToOutputFile(scoutingFormData, outputFilepath):
                     tempRow[5] = scoutingFormData.hatchHighSandstorm
                     tempRow[6] = scoutingFormData.cargoLowSandstorm
                     tempRow[7] = scoutingFormData.cargoHighSandstorm
-                    tempRow[8] = scoutingFormData.hatchLow
-                    tempRow[9] = scoutingFormData.hatchHigh
-                    tempRow[10] = scoutingFormData.cargoLow
-                    tempRow[11] = scoutingFormData.cargoHigh
+                    tempRow[8] = scoutingFormData.hatchLowTeleop
+                    tempRow[9] = scoutingFormData.hatchHighTeleop
+                    tempRow[10] = scoutingFormData.cargoLowTeleop
+                    tempRow[11] = scoutingFormData.cargoHighTeleop
                     tempRow[12] = scoutingFormData.habClimb
                     tempRow[13] = scoutingFormData.foul
                     tempRow[14] = scoutingFormData.card
