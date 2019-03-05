@@ -7,7 +7,7 @@ import csv
 import copy
 import sys
 
-showImages = False
+showImages = True
 
 class ScoutingFormData:
     def __init__(self):
@@ -113,6 +113,7 @@ def FitToQuestionBox(img):
 
     # rotate to top
     if cumSumTop < cumSumBottom:
+        imgThresh = cv2.rotate(imgThresh, cv2.ROTATE_180)
         imgBoxHighlight = cv2.rotate(imgBoxHighlight, cv2.ROTATE_180)
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_180)
 
@@ -131,7 +132,7 @@ def FindBubbles(imgBox):
     contours, hierarchy = cv2.findContours(imgEdge, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     radThreshMin = 5
-    radThreshMax = 20
+    radThreshMax = 25
     imgGrayFill = imgGray.copy()
     for c in contours:
         (x, y), rad = cv2.minEnclosingCircle(c)

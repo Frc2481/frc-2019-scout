@@ -131,7 +131,7 @@ def FindBubbles(imgBox):
     contours, hierarchy = cv2.findContours(imgEdge, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     radThreshMin = 5
-    radThreshMax = 20
+    radThreshMax = 25
     imgGrayFill = imgGray.copy()
     for c in contours:
         (x, y), rad = cv2.minEnclosingCircle(c)
