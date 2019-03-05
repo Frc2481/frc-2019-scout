@@ -198,7 +198,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     imgGray = cv2.cvtColor(imgBox, cv2.COLOR_BGR2GRAY)
     imgThresh = cv2.threshold(imgGray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
 
-    bubbleFillThreshPercent = 0.7
+    bubbleFillThreshPercent = 0.65
     bubbleMatrix2 = []
     totalBubbleCount = 0
     for c2 in bubbleMatrix:

@@ -7,7 +7,7 @@ import csv
 import copy
 import sys
 
-showImages = True
+showImages = False
 
 class ScoutingFormData:
     def __init__(self):
@@ -199,7 +199,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
     imgGray = cv2.cvtColor(imgBox, cv2.COLOR_BGR2GRAY)
     imgThresh = cv2.threshold(imgGray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
 
-    bubbleFillThreshPercent = 0.7
+    bubbleFillThreshPercent = 0.65
     bubbleMatrix2 = []
     totalBubbleCount = 0
     for c2 in bubbleMatrix:
@@ -248,7 +248,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
             + (bubbleMatrix2[5] - 1) * 10 \
             + (bubbleMatrix2[6] - 1)
     else:
-        print("\033[91m" + "Error match not defined")
+        print("\033[91m" + "Error match not defined" + "\033[0m")
         return [], True
 
     if bubbleMatrix2[7]:
