@@ -49,7 +49,7 @@ def ResizeImg(img, heightDesired):
 
 
 def FitToQuestionBox(img):
-    height = 1200
+    height = 700
     img, isError = ResizeImg(img, height)
     if isError:
         print("\033[91m" + "Error image resize failed" + "\033[0m")
@@ -95,8 +95,12 @@ def FitToQuestionBox(img):
         isError = isError and tempIsError
 
     # look for question box top
+    adaptThresh = int(height * 0.5)
+    if adaptThresh % 2 == 0:
+        adaptThresh -= 1
     imgGray = cv2.cvtColor(imgBox, cv2.COLOR_BGR2GRAY)
-    imgThresh = cv2.threshold(imgGray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    # imgThresh = cv2.threshold(imgGray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    imgThresh = cv2.adaptiveThreshold(imgGray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV , adaptThresh, 1)
     heightPercentROI = 0.05
 
     cumSumTop = 0
@@ -113,6 +117,7 @@ def FitToQuestionBox(img):
 
     # rotate to top
     if cumSumTop < cumSumBottom:
+        imgThresh = cv2.rotate(imgThresh, cv2.ROTATE_180)
         imgBoxHighlight = cv2.rotate(imgBoxHighlight, cv2.ROTATE_180)
         imgBox = cv2.rotate(imgBox, cv2.ROTATE_180)
 
@@ -145,16 +150,19 @@ def FindBubbles(imgBox):
 
     bubbleContours = []
     bubbleCount = 0
+    height, width = imgThreshFill.shape
     for c in contours:
         (x, y), rad = cv2.minEnclosingCircle(c)
 
-        if rad < radThreshMax and rad > radThreshMin:
+        edgePercentThresh = 0.01
+        if rad < radThreshMax and rad > radThreshMin and x > width * edgePercentThresh \
+            and x < width * (1 - edgePercentThresh) and y > height * edgePercentThresh and y < height * (1 - edgePercentThresh):
+
             bubbleContours.append(c)
             bubbleCount += 1
 
     expectedBubbleCount = 148
     if bubbleCount != expectedBubbleCount:
-        print(bubbleCount)
         print("\033[91m" + "Error incorrect bubble count" + "\033[0m")
         return [], True
 
@@ -247,7 +255,7 @@ def ReadScoutingFormData(imgBox, bubbleContours):
             + (bubbleMatrix2[5] - 1) * 10 \
             + (bubbleMatrix2[6] - 1)
     else:
-        print("\033[91m" + "Error match not defined")
+        print("\033[91m" + "Error match not defined" + "\033[0m")
         return [], True
 
     if bubbleMatrix2[7]:
