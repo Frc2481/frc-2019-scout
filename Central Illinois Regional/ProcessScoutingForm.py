@@ -49,7 +49,7 @@ def ResizeImg(img, heightDesired):
 
 
 def FitToQuestionBox(img):
-    height = 700
+    height = 1200
     img, isError = ResizeImg(img, height)
     if isError:
         print("\033[91m" + "Error image resize failed" + "\033[0m")
